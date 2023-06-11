@@ -52,12 +52,21 @@ def parse_args():
         default=10,
         help="text guidance",
     )
+    parser.add_argument(
+        "--seed",
+        action="store_true",
+        default=False,
+        help="True to seed random processed",
+    )
 
     args = parser.parse_args()
 
     return args
 
 args = parse_args()
+
+# add seed 
+if args.seed: torch.manual_seed(0)
 
 # set up model and test data
 pipe = StableDiffusionInstructPix2PixPipeline.from_pretrained(args.model_id, torch_dtype=torch.float16).to("cuda")

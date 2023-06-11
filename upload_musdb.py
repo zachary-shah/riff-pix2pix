@@ -46,7 +46,7 @@ def main(args):
     )
 
     print("Pushing to the Hub...")
-    ds_name = f"musdb18-spec-pix2pix-test"
+    ds_name = f"musdb18-spec-pix2pix"
     if args.num_samples_to_use is not None:
         num_samples = args.num_samples_to_use
         ds_name += f"-{num_samples}-samples"

@@ -5,6 +5,7 @@ import os, argparse
 
 from diffusers import StableDiffusionInstructPix2PixPipeline
 from datasets import load_dataset
+from tqdm import tqdm
 from riffusion.spectrogram_image_converter import SpectrogramImageConverter
 from riffusion.spectrogram_params import SpectrogramParams
 
@@ -29,15 +30,15 @@ def parse_args():
         help="Output directory for audio and image samples.",
     )
     parser.add_argument(
-        "--max_samples",
+        "--sample_indx",
         type=int,
-        default=25,
-        help="Max number of test examples to sample on",
+        default=0,
+        help="Index in test dataset to conduct exploration on.",
     )
     parser.add_argument(
         "--num_inference_steps",
         type=int,
-        default=20,
+        default=100,
         help="Number of inference steps during sampling",
     )
     parser.add_argument(
@@ -65,7 +66,6 @@ generator = torch.Generator("cuda").manual_seed(0)
 test_dataset = load_dataset(args.dataset_id)["train"]
 test_dataset = torch.utils.data.random_split(test_dataset, [args.max_samples, len(test_dataset)-args.max_samples])[0]
 img_converter_to_audio = SpectrogramImageConverter(SpectrogramParams(sample_rate=44100, min_frequency=0, max_frequency=10000))
-os.makedirs(args.base_save_path, exist_ok=True)
 
 def save_img_and_audio(img, filename):
     # save image
@@ -76,10 +76,7 @@ def save_img_and_audio(img, filename):
 
 print(f"Beginning inference for {len(test_dataset)} samples.")
 
-for (i, item) in enumerate(test_dataset):
-    prompt = item["edited_prompt"]
-    print(f"Sampling {i+1}/{len(test_dataset)}: prompt=\"{prompt}\"")
-    
+for (i, item) in tqdm(enumerate(test_dataset)):
     # get sample
     edited_image_sample = pipe(
         item["edited_prompt"],
@@ -91,7 +88,7 @@ for (i, item) in enumerate(test_dataset):
     ).images[0]
 
     # save images
-    base_name = prompt.replace(" ", "_").replace(",", "").replace(".","")
+    base_name = item["edited_prompt"].replace(" ", "_").replace(",", "").replace(".","")
     save_img_and_audio(edited_image_sample, base_name + "_edit_sample")
     save_img_and_audio(item["original_image"], base_name + "_original")
     save_img_and_audio(item["edited_image"], base_name + "_edit_target")

@@ -5,7 +5,7 @@ import os, argparse
 
 from diffusers import StableDiffusionInstructPix2PixPipeline
 from datasets import load_dataset
-
+from tqdm import tqdm
 from riffusion.spectrogram_image_converter import SpectrogramImageConverter
 from riffusion.spectrogram_params import SpectrogramParams
 
@@ -74,8 +74,9 @@ def save_img_and_audio(img, filename):
     out_audio_recon = img_converter_to_audio.audio_from_spectrogram_image(img, apply_filters=True).set_channels(2)
     out_audio_recon.export(os.path.join(args.base_save_path,filename + ".wav"), format="wav") 
 
+print(f"Beginning inference for {len(test_dataset)} samples.")
 
-for (i, item) in enumerate(test_dataset):
+for (i, item) in tqdm(enumerate(test_dataset)):
     # get sample
     edited_image_sample = pipe(
         item["edited_prompt"],
@@ -91,3 +92,5 @@ for (i, item) in enumerate(test_dataset):
     save_img_and_audio(edited_image_sample, base_name + "_edit_sample")
     save_img_and_audio(item["original_image"], base_name + "_original")
     save_img_and_audio(item["edited_image"], base_name + "_edit_target")
+
+print("Inference complete!")

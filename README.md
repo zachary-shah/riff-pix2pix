@@ -37,7 +37,7 @@ Since SD diffuses in the image space, we instead prepare an original/edited imag
 
 ![dataset_example](github_page/dataset_example.gif)
 
-With about 30,000 more examples like these, we completed training on an A10G GPU for 72 hours (300,000 global steps with batch size = 4) on the full MUSDB-18 dataset. Our training procedure is reproducible [below](https://github.com/zachary-shah/riff-cnet).
+With about 30,000 more examples like these, we completed training on an A10G GPU for 72 hours (300,000 global steps with batch size = 4) on the full MUSDB-18 dataset. Our training procedure is reproducible [below](https://github.com/zachary-shah/riff-pix2pix/blob/main/README.md#how-to-train).
 
 ## Results:
 

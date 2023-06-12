@@ -33,7 +33,7 @@ This is considered the "Original" audio. Then, we add the vocal audio stem from 
 
 https://github.com/zachary-shah/riff-pix2pix/assets/123213526/83462328-9aa4-4750-a029-25a219c6b740
 
-Since SD diffuses in the image space, we instead prepare an original/edited image pair from these pieces of audio, where the original contains the background and the edited target image contains the background + vocals, with the edit prompt for this particular example as: "add a female vocal pop melody, electronic style, with playful long held vocal notes":
+Since SD diffuses in the image space, we instead prepare an original/edited image pair from these pieces of audio, where the original contains the mel spectrogram of the background, and the edited target image contains the mel spectrogram of background + vocals, with the edit prompt for this particular example as: "add a female vocal pop melody, electronic style, with playful long held vocal notes":
 
 ![dataset_example](github_page/dataset_example.gif)
 

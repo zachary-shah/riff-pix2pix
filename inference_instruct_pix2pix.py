@@ -66,7 +66,7 @@ def parse_args():
 args = parse_args()
 
 # add seed 
-if args.seed: torch.manual_seed(390)
+if args.seed: torch.manual_seed(364)
 
 # set up model and test data
 pipe = StableDiffusionInstructPix2PixPipeline.from_pretrained(args.model_id, torch_dtype=torch.float16).to("cuda")
@@ -100,7 +100,7 @@ for (i, item) in enumerate(test_dataset):
     ).images[0]
 
     # save images
-    base_name = prompt.replace(" ", "_").replace(",", "").replace(".","")
+    base_name = f"s_{i+1}_" + prompt.replace(" ", "_").replace(",", "").replace(".","")
     save_img_and_audio(edited_image_sample, base_name + "_edit_sample")
     save_img_and_audio(item["original_image"], base_name + "_original")
     save_img_and_audio(item["edited_image"], base_name + "_edit_target")

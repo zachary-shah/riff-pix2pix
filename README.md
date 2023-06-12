@@ -1,150 +1,145 @@
-# Controlled Audio Inpainting using Riffusion and ControlNet
+# Controlled Audio Inpainting using Riffusion and ImagePix2Pix
 
 ## Summary: 
 
- This project was developed by Zachary Shah, Neelesh Ramachandran, and Mason Wang at Stanford, based on the work done by Seth Forsgren and Hayk Martiros on Riffusion, as well as the work done by Lvmin Zhang and Maneesh Agrawala on ControlNet. Here, we fine-tune Riffusion using the ControlNet architecture in order to create a conditioned audio generation pipeline for audio inpainting. We demonstrate that ControlNet, which has been shown to have immense power in conditional image generation, can also help condition the generation of new audio based on structures inherent to a piece of music represented in a spectrogram of a backtrack or musical accompaniment. 
+This project suggests the feasibility of training an InstructPix2Pix model for the task of audio inpainting. Based on prior work by Brooks, et. al. on . [InstructPix2Pix: Learning to Follow Image Editing Instructions](https://arxiv.org/pdf/2211.09800.pdf). 
 
-## Examples of our Model's Samples
+## Detailed Summary:
 
-To clarify exactly what our model is doing, let's dive into an example. Say we have a song with some vocal lines that we don't like, and we want to generate some new vocals using Stable Diffusion. Let's take this roughly 5 second clip of a rock song as our starting point: 
+The audio inpainting task is as follows: given an input clip of musical audio and a textual editing prompt describing the desired feature added to a song, generate an output clip, which is the input audio clip with an audio representation of the edit prompt superimposed in. 
 
-https://user-images.githubusercontent.com/123213526/225162902-84f3feec-6b3c-4020-99ca-cf51c35b0f5b.mp4
+In this project, we instead look at a simpler task: given input audio, "paint in" a *vocal melody* as described by a text prompt. This can be generalized to any type of instrument / musical stem with proper training.
 
-You can hear this song has a distinct beat, with a pause near the middle of the clip and then the re-introduction of the prominent guitar feature. Here's what the spectrogram of this clip will look like:
+To complete this task, we trained an InstructPix2Pix model to learn to "edit in" a vocal part of a spectrogram, which is essentially an image-transformation representation of a 5 second clip of audio. We trained this task off the [Riffusion V1](https://huggingface.co/riffusion/riffusion-model-v1/tree/main) checkpoint, developed by Seth Forsgren Hayk Martiros, which is a fine-tune of Stable Diffusion V1.5 which has learned to recognize and diffuse in the spectrogram image space.
 
-![Generate an up-tempo female vocal rock melody _target](https://user-images.githubusercontent.com/123213526/225163023-fea74ef5-20fb-4a90-b367-02e8b42d4af0.png)
+## Training Setup:
 
-Notice that most of the low portion of the spectrogram details the rhythmic structure of the drum, with some of the mid-frequencies outlining guitar chords with the vocals present as the more curvy lines. You can also see the pause in most of the intstruments, with the singer's last words "Take Me Home" represented as the strong black sinusoidal lines in the mid-frequencies region of the end of the clip. To condition our model to generate this rock song, but with different vocals, we apply a pre-trained CNN called Spleeter to get rid of the vocals from the above clip to isolate just the background, containing the bass, guitar, and audio. Here, you can hear just the background audio:
+To train an InstructPix2Pix model, training data must be in the following form: (Original Image, Edit Instruction, Edited Image). For our task, this takes the form:
 
-https://user-images.githubusercontent.com/123213526/225163395-eb17fae0-57ba-4896-8bd8-2a2632b76937.mp4
+- **Original image**:  the spectrogram of the "background audio" or the song without vocals
+- **Edit instruction**:  a text prompt in a form like "add a {style-descriptors} {instrument-stem}"
+- **Edited image**:  the spectrogram of the "full audio", which includes the vocals in the training song
 
-Now, to condition our model to generate a melody over this background, we turn this background audio into a spectrogram and detect the canny edges of the spectrogram. Observe the difference between the full audio spectrogram and the canny edges of the isolated background audio:
+We developed training data using MUSDB-18, a dataset with pre-stemmed audio for a few hundred royalty-free songs with vocal melodies, making it easy to form these original-edit image pairs by selecting a stem to remove from the input audio example. 
 
-![ezgif com-gif-maker](https://user-images.githubusercontent.com/123213526/225170849-ac055967-1449-4ea7-8694-224f69bb06cb.gif)
+To show how a training example is prepared, we start with a 5 second audio clip of the background audio stems for a song in MUSDB-18:
 
-Notice that this outlines many of the edges we saw in the spectrogram of the full audio above (especially in the low-ends), but none of the singer's prominent vocal features are detected due to vocal isolation by Spleeter. Just for fun, if we turn this canny-edge detected spectrogram back into audio, it sounds nothing like the original (warning: turn down your volume):
+![dataset_original](github_page/datset_original.mp4)
 
-https://user-images.githubusercontent.com/123213526/225163797-ce5bac66-8fc4-4665-989c-33ff85506463.mp4
+This is considered the "Original" audio. Then, we add the vocal audio stem from the example to act as the "Edited" audio, which is the target for the model to learn to generate such stems:
 
-Though these canny edges sound like garbage, we can actually use them to condition the diffusion of a song just like the original. Combining this canny edge map with the text prompt to "Generate an up-tempo female vocal rock melody", here is a sample of what our model creates:
+![dataset_target](github_page/dataset_target.mp4)
 
-https://user-images.githubusercontent.com/123213526/225164377-8eaa321b-e243-41c2-aa99-c23b36d73d7c.mp4
+Since SD diffuses in the image space, we instead prepare an original/edited image pair from these pieces of audio, where the original contains the background and the edited target image contains the background + vocals, with the edit prompt for this particular example as: "add a female vocal pop melody, electronic style, with playful long held vocal notes":
 
-In this sample, you can hear all the same features of the original background audio (rhythm, tempo, harmony, and instrumentation all preserved); yet the vocals generated are completely different, both rhythmically and stylistically! Though the lyrics are incoherent, the melodic features adhere to the harmony outlined by the background, so the melody actually appears to sync up with the rhythmic and harmonic structure of the background! 
+![dataset_example](github_page/dataset_example.gif)
 
-In fact, if we observe the spectrogram of the model's sample, we can see that in fact, the conditioned edges are preserved! Here you can see a comparison between the above model sample (the gif pauses longer on this frame), its conditioned edge map, and the original target,: 
+With about 30,000 more examples like these, we completed training on an A10G GPU for 72 hours (300,000 global steps with batch size = 4) on the full MUSDB-18 dataset. Our training procedure is reproducible below.
+
+## Results:
+
+Overall, the approach works... sometimes. When it works, our model generates decently fitting vocal melodies. For example, here is one example of an input audio in our test set:
+
+![pop_original](github_page/pop_original.mp4)
+
+Converting this to a spectrogram and feeding it into the model with the prompt to "add a female vocal pop-rock melody with an etherial voice", the spectrogram sample visibly preserves the background audio structure whilst adding a melody on top:
+
+![melody_added_pop](github_page/melody_added_pop.gif)
+
+Here is the converted audio of the sample:
+
+![pop_sample](github_page/pop_sample.mp4)
+
+And hear that the vocals generated are audibly different than the vocals of the original song we extracted the background audio from:
+
+![pop_target](github_page/pop_target.mp4)
+
+Here is a second example, instead for a heavy metal song, given the background audio and a prompt to "add a heavy metal scremo vocal part, borderline satanic vocals":
+
+![melody_added_metal](github_page/melody_added_metal.gif)
+
+The vocals generated here are quite sparse, but the background audio is still preserved. Here is the sample:
+
+![metal_sample](github_page/metal_sample.mp4)
+
+Compare this to the original input background:
+
+![metal_original](github_page/metal_original.mp4)
 
 
-![ezgif com-gif-maker copy](https://user-images.githubusercontent.com/123213526/225171953-0b4bd1f0-09d4-4207-a724-f53aa1b9ff78.gif)
+Though this approach works sometimes, about 80% of the time, given a new input spectrogram and an edit instruction, the edit is not performed and the input. It is likely that the perturbation in the text is not strong enough to find a spectral representation of the audio, likely because the dimensionality of the edit instruction is pretty small in our proof of concept. Here is an example of the model input and its sample for cases when this happens, where you can see the sample just looks like a slightly noisy version of the original background input with no vocals generated:
 
 
-Since the diffusion process is random, we can generate more samples with the same conditioning, yet get completely different results, as you can hear below:
+![melody_not_added](github_page/melody_not_added.gif)
 
-https://user-images.githubusercontent.com/123213526/225164879-2ae8672f-726b-45c7-ab3e-cca583355915.mp4
+Even with a search over different image and text guidance scales, which modify how much the model weights the instruction in the text versus the preservation of features in the input image (see the [InstructPix2Pix Paper](https://arxiv.org/pdf/2211.09800.pdf) for details of how this works), this issue prevails. It is likely due to the fact that the model somewhat over-fit to its training data. 
 
+This is validated when conducting inference on a song example in the training dataset. Observe the original image, target image, and model sample below:
 
-Now, one might argue that ControlNet isn't necessary to preserve background audio. Why can't we just seed the untuned Riffusion-v1 model's diffusion process with the canny edge map without the ControlNet architecture? Well, when we tried that, this is what the audio sounds like: 
+![train_example](github_page/train_example.gif)
 
+Here, we see the model's sampled vocal patterns in the spectrogram just look like an amplified version of the vocals in the target image, meaning its prediction of the vocal patterns was overfit to the vocals it observed during training. This was the case no matter what text prompt we provided, even with high textual guidance scales up to $s_T=20$.
 
-https://user-images.githubusercontent.com/123213526/225167505-82754b4c-9d2e-4b56-990f-c7bea88e851e.mp4
+For this example, you can hear that the model sample "echoes" some of the vocal features in the training target example, further supporting this conclusion:
 
+Training Target (or label):
 
-The audio ends up sounding similar to the edge map we listend to earlier. Essentially, Riffusion-v1 isn't tuned to diffuse from edge-maps, but needs a fully fledged spectrogram to anchor the text-conditioned diffusion. Yet, the features of the seed image will not be preserved in the output audio, as steps will be made away from those spectral features in the latent space during the forward pass of the denoising. As you can see, even if we give Riffusion-v1 the FULL original audio sample for this song as its seed with the same text prompt, we get a sample where the background sounds nothing like the original: 
+![train_target](github_page/train_target.mp4)
 
+Inference Sample (hear the echo of lyrics present in the label): 
 
-https://user-images.githubusercontent.com/123213526/225169935-eabab80e-608c-42fb-bcce-61a674c7a26e.mp4
+![train_sample](github_page/train_sample.mp4)
+
+## Conclusion
+
+Though there were some issues in our implementation, if trained at a larger scale with a larger variety of "edit" instructions to the music, it is likely these overfitting issues would not remain. However, when we test this model on unseen audio, as shown in the two examples above, there is a visible edit made that matches the edit instruction provided, with high-quality preservation of the input. This initial project shows promise to use an InstructPix2Pix training architecture to build a diffusion model for the audio-inpainting task.
 
 
 And that's our project! Of course, there are many more improvements to make, like generating more coherent lyrics (which is an open problem in the generative audio community) or extending the audio generation to longer than 5 seconds. However, our project demonstrates the potential for exploring deep spectral conditioning text-to-audio generation.
 
-## More Samples
+## How To Run Inference
 
-Just for fun, here's some more of our favorite model samples:
-
-
-
-Here's an example with a reggae clip: 
-
-https://user-images.githubusercontent.com/123213526/225165442-841af8b8-d67f-438e-ba49-18ff656de0d4.mp4
-
-Conditioning on the canny edge map of the background audio spectrogram, and a text prompt to "Generate an light male vocal reggae melody", here is some of our model's samples: 
-
-https://user-images.githubusercontent.com/123213526/225165470-30731fc2-8b90-4be1-a9e4-73765f9b2faa.mp4
-
-https://user-images.githubusercontent.com/123213526/225165477-76fdae62-68ce-41da-9dcd-a0a7c4c74bf6.mp4
-
-
-
-Here's another 5 second clip rock song: 
-
-https://user-images.githubusercontent.com/123213526/225160377-99585fe0-bbe0-4c63-ad88-511f4f723f20.mp4
-
-Conditioning on the canny edge map of the background audio spectrogram, and a text prompt to "Generate an uplifting male vocal rock melody", here is some of our model's samples: 
-
-https://user-images.githubusercontent.com/123213526/225161071-d7452104-1f5c-42f2-b4ae-8e9b047c6224.mp4
-
-https://user-images.githubusercontent.com/123213526/225161160-09753807-b3be-4b1c-982d-2f62691d3caa.mp4
-
-
-
-
-## To use on our pre-trained model: 
-
-Our pretrained model is located at our HuggingFace repo. Access this model using:
+Our pretrained model is located on HuggingFace [here](https://huggingface.co/zachary-shah/riff-pix2pix-v1). We also have a mini-test dataset in order to demonstrate inference. Set up your environment with the following:
 
 ```git install lfs```
+```pip install -r requirements.txt```
 
-```git clone https://huggingface.co/zachary-shah/riffusion-cnet-v2```
+Here is a script to demo inference on our pre-trained model using a mini test dataset we prepared (which generated the samples above):
 
-See how to use our pre-trained model using the Jupyter Notebook ```sample_riff_cnet.ipynb```. This script is best run in Google Colab. To run, make sure to set up the necessary Python environment at ```conda env create -f envs/control_env.yml```, and clone this repo in your Google Drive using ```git clone https://github.com/zachary-shah/riff-cnet.git```. Run ```sample_riff_cnet.ipynb``` within the cloned repo.
+```python inference_instruct_pix2pix.py --seed --max_samples 10 --num_inference_steps 100```
 
+Modify this code to try inference on your own audio examples. This requires preparing them as spectrograms: see /Riffusion on how to do this. 
 
-## To train Riffusion using ControlNet from scratch:
+## How To Train
 
-Note that this is a compute-intensive process and requires the use of at least 25 GiB GPU vRAM.  
+First, we preprocessed all of MUSDB-18 into input/edit spectrogram pairs, wich prompts labeled manually per song, using the following script:
 
-1. From terminal, clone this repo to pull in the data and code:
+```python preprocess_musdb.py --root_data_dir "/data/musdb18/train" --output_dir "/data/musdb18-pix2pix/train" --pitch_augment```
 
-```git clone https://github.com/zachary-shah/riff-cnet.git``` 
+This split each song into 5-second segments to prepare multiple training examples per song. We also perturb the audio with pitch shifts to increase the cardinality of our dataset.
 
-```cd riff-cnet; ls```
+Then, the dataset must be uploaded to HuggingfaceHub in order to be accessed by Diffusers for setting up a training dataset: 
 
-2. (Optional) We provide all our preprocessed train data in the ```train-data/``` directory, which is generated from the raw audio files in ```raw-audio```. To re-generate this data, first set up the processing environment ```conda env create -f envs/processing_env.yml```, and then simply run:
+```python upload_musdb.py --data_root "/data/musdb18-pix2pix/train"```
 
-```gen_data.sh```
+Finally, training can be done by setting up an environment with **accelerate** from Diffusers, and below is the settings we used in order to train our model:
 
-Otherwise, if you would like to use custom data to train this model, you can apply our processing pipeline to prepare training data from a set of .wav audio files. Your audio files must be located in the folder ```<your_audio_files_directory>```, and each audio file must have a corresponding prompt entered into ```<your_prompt_file>.json```. See ```prompt_file.json``` for reference on how to set this file up. Then run this script:
+```bash
+conda create --name diffusers python=3.8.5
+conda activate diffusers
+pip install -r requirements.txt
+accelerate config
+accelerate launch train_instruct_pix2pix.py \
+--output_dir "/data/pix2pix-riff-ckpt" \
+--resume_from_checkpoint "latest" \
+--seed 0 \
+--max_train_steps 300000 \
+--resolution 512 \
+--train_batch_size 4 \
+--dataloader_num_workers 16 \
+--checkpointing_steps 30000 \
+--checkpoints_total_limit 3 \
+--conditioning_dropout_prob=0.05 
+```
 
-```python make_cnet_dataset.py --audio_dir "<your_audio_files_directory>" --train_data_dir "<output_train_data_directory>" --prompt_file "<your_prompt_file>"```
-
-*Note 1:* preprocessing requires the use of Spleeter to separate the background audio from vocals, but we observe that different Python versions and packages were required depending on the user's operating system. You may need to play around with different versions of Python to get this function to work. 
-
-*Note 2:* for some reason, there is a bug where only 5 audio files can be processed at a time. See ```gen_data.sh``` for a solution to this, which involves limiting the above script to processing 5 files at a time, and cycles through starting at every 5 indexes for processing all the data at once.
-
-3. Now enter the control enviornment and download riffusion to add control to the model:
-
-```conda env create -f envs/control_env.yml```
-
-```conda activate control```
-
-```python cnet_riff_add_control.py```
-
-3. At this point, a checkpoint of riffusion with the added ControlNet layers should be saved into ./models. Now, we are ready to train: 
-
-*run this for fast training:*
-
-```python cnet_riff_training.py --train_data_dir "train-data/" --max_steps 100000```
-
-*if you get CUDA OOM error, run this instead:*
-
-```python cnet_riff_training.py --train_data_dir "train-data/" --max_steps 100000 --save_gpu_memory True```
-
-*if CUDA OOM error persists, try this (lower batch size to 1):*
-
-```python cnet_riff_training.py --train_data_dir "train-data/" --max_steps 100000 --batch_size 1 --save_gpu_memory True --only_mid_control True```
-
-If training is extremely slow, can also lower max_steps to 10000, as we saw convergence happen even at this point. Note that this training script is also set up to run for a maximum of 12 hours. To change this max training time, manually go into cnet_riff_training.py and change the ```max_train_time``` variable as desired.
-
-4. After training completes, run the following script to upload the model to HuggingFace if desired, with the version of the image logger provided as the first argument and the repo to upload to as the second (using my repo as an example):
-
-```python upload_checkpoints.py 3 zachary-shah/riffusion-cnet-v2```
+To decrease memory usage, Diffusers also provides gradient checkpointing via the ```--gradient_checkpointing``` parameter option, and ```--enable_xformers_memory_efficient_attention``` for low xla memory consumption.

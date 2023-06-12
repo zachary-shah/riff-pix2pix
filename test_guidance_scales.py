@@ -3,7 +3,6 @@ Observe behavior of sampling for one input with different image and text guidanc
 Result: best qualitative performance at sI = 1.5, sT = 10-15
 """
 
-
 import PIL
 import requests
 import torch

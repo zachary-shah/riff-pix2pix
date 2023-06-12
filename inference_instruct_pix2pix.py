@@ -86,7 +86,6 @@ def save_img_and_audio(img, filename):
 
 print(f"Beginning inference for {len(test_dataset)} samples.")
 
-
 for (i, item) in enumerate(test_dataset):
     prompt = item["edited_prompt"]
     print(f"Sampling {i+1}/{len(test_dataset)}: prompt=\"{prompt}\"")
@@ -103,35 +102,6 @@ for (i, item) in enumerate(test_dataset):
 
     # save images
     base_name = f"s_{i+1}_" + prompt.replace(" ", "_").replace(",", "").replace(".","")
-    save_img_and_audio(edited_image_sample, base_name + "_edit_sample")
-    save_img_and_audio(item["original_image"], base_name + "_original")
-    save_img_and_audio(item["edited_image"], base_name + "_edit_target")
-
-
-print(f"Adding custom simpler prompts: ")
-
-simple_prompts = ["add a vocal melody.", 
-                  "add a female vocal melody.",
-                  "add a female vocal melody.", 
-                  "add a deep male vocal melody.",
-                  "add a deep female vocal melody."]
-
-for (i, prompt) in enumerate(simple_prompts):
-    item = test_dataset[i]
-    print(f"Sampling {i+1}/{len(test_dataset)}: prompt=\"{prompt}\"")
-    
-    # get sample
-    edited_image_sample = pipe(
-        item["edited_prompt"],
-        image=item["original_image"],
-        num_inference_steps=args.num_inference_steps,
-        image_guidance_scale=args.image_guidance_scale,
-        guidance_scale=args.guidance_scale,
-        generator=generator,
-    ).images[0]
-
-    # save images
-    base_name = f"s_{i+1+args.max_samples}_" + prompt.replace(" ", "_").replace(",", "").replace(".","")
     save_img_and_audio(edited_image_sample, base_name + "_edit_sample")
     save_img_and_audio(item["original_image"], base_name + "_original")
     save_img_and_audio(item["edited_image"], base_name + "_edit_target")

@@ -2,7 +2,7 @@
 
 ## Summary: 
 
-This project suggests the feasibility of training an InstructPix2Pix model for the task of audio inpainting. Based on prior work by Brooks, et. al. on . [InstructPix2Pix: Learning to Follow Image Editing Instructions](https://arxiv.org/pdf/2211.09800.pdf). 
+This project suggests the feasibility of training an InstructPix2Pix model for the task of audio inpainting. Based on prior work by Brooks, et. al on [InstructPix2Pix: Learning to Follow Image Editing Instructions](https://arxiv.org/pdf/2211.09800.pdf). 
 
 ## Detailed Summary:
 

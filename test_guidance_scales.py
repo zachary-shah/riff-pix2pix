@@ -26,7 +26,7 @@ def parse_args():
     parser.add_argument(
         "--base_save_path",
         type=str,
-        default="/data/pix2pix-inference",
+        default="/data/pix2pix-inference/guidance_search",
         help="Output directory for audio and image samples.",
     )
     parser.add_argument(
@@ -41,19 +41,6 @@ def parse_args():
         default=100,
         help="Number of inference steps during sampling",
     )
-    parser.add_argument(
-        "--image_guidance_scale",
-        type=int,
-        default=1.5,
-        help="image guidance",
-    )
-    parser.add_argument(
-        "--guidance_scale",
-        type=int,
-        default=10,
-        help="text guidance",
-    )
-
     args = parser.parse_args()
 
     return args
@@ -75,9 +62,8 @@ def save_img_and_audio(img, filename):
     out_audio_recon = img_converter_to_audio.audio_from_spectrogram_image(img, apply_filters=True).set_channels(2)
     out_audio_recon.export(os.path.join(args.base_save_path,filename + ".wav"), format="wav") 
 
-
 # just get first idem
-item = test_dataset[0]
+item = test_dataset[args.sample_indx]
 prompt = item["edited_prompt"]
 original_img = item["original_image"]
 base_name = prompt.replace(" ", "_").replace(",", "").replace(".","")

@@ -113,13 +113,17 @@ Modify this code to try inference on your own audio examples. This requires prep
 
 First, we preprocessed all of MUSDB-18 into input/edit spectrogram pairs, wich prompts labeled manually per song, using the following script:
 
-```python preprocess_musdb.py --root_data_dir "/data/musdb18/train" --output_dir "/data/musdb18-pix2pix/train" --pitch_augment```
+```bash
+python preprocess_musdb.py --root_data_dir "/data/musdb18/train" --output_dir "/data/musdb18-pix2pix/train" --pitch_augment
+```
 
 This split each song into 5-second segments to prepare multiple training examples per song. We also perturb the audio with pitch shifts to increase the cardinality of our dataset.
 
 Then, the dataset must be uploaded to HuggingfaceHub in order to be accessed by Diffusers for setting up a training dataset: 
 
-```python upload_musdb.py --data_root "/data/musdb18-pix2pix/train"```
+```bash
+python upload_musdb.py --data_root "/data/musdb18-pix2pix/train"
+```
 
 Finally, training can be done by setting up an environment with **accelerate** from Diffusers, and below is the settings we used in order to train our model:
 

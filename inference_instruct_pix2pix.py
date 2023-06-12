@@ -72,7 +72,8 @@ if args.seed: torch.manual_seed(364)
 pipe = StableDiffusionInstructPix2PixPipeline.from_pretrained(args.model_id, torch_dtype=torch.float16).to("cuda")
 generator = torch.Generator("cuda").manual_seed(0)
 test_dataset = load_dataset(args.dataset_id)["train"]
-test_dataset = torch.utils.data.random_split(test_dataset, [args.max_samples, len(test_dataset)-args.max_samples])[0]
+max_samples = min(args.max_samples, len(test_dataset))
+test_dataset = torch.utils.data.random_split(test_dataset, [max_samples, len(test_dataset)-max_samples])[0]
 img_converter_to_audio = SpectrogramImageConverter(SpectrogramParams(sample_rate=44100, min_frequency=0, max_frequency=10000))
 os.makedirs(args.base_save_path, exist_ok=True)
 
@@ -112,7 +113,7 @@ print(f"Adding custom simpler prompts: ")
 simple_prompts = ["add a vocal melody.", 
                   "add a female vocal melody.",
                   "add a female vocal melody.", 
-                  "add a deep male vocal melody."
+                  "add a deep male vocal melody.",
                   "add a deep female vocal melody."]
 
 for (i, prompt) in enumerate(simple_prompts):

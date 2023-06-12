@@ -99,14 +99,13 @@ And that's our project! Of course, there are many more improvements to make, lik
 
 ## How To Run Inference
 
-Our pretrained model is located on HuggingFace [here](https://huggingface.co/zachary-shah/riff-pix2pix-v1). We also have a mini-test dataset in order to demonstrate inference. Set up your environment with the following:
+Our pretrained model is located on HuggingFace [here](https://huggingface.co/zachary-shah/riff-pix2pix-v1). We also have a mini-test dataset in order to demonstrate inference. Set up your environment as below to run our inference script to demo inference on our pre-trained model using a mini test dataset we prepared (which generated the samples above):
 
-```git install lfs```
-```pip install -r requirements.txt```
-
-Here is a script to demo inference on our pre-trained model using a mini test dataset we prepared (which generated the samples above):
-
-```python inference_instruct_pix2pix.py --seed --max_samples 10 --num_inference_steps 100```
+```bash
+git install lfs
+pip install -r requirements.txt
+python inference_instruct_pix2pix.py --seed --max_samples 10 --num_inference_steps 100
+```
 
 Modify this code to try inference on your own audio examples. This requires preparing them as spectrograms: see /Riffusion on how to do this. 
 

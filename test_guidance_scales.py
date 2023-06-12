@@ -48,11 +48,13 @@ def parse_args():
 args = parse_args()
 
 
+torch.manual_seed(364)
+
 # set up model and test data
 pipe = StableDiffusionInstructPix2PixPipeline.from_pretrained(args.model_id, torch_dtype=torch.float16).to("cuda")
 generator = torch.Generator("cuda").manual_seed(0)
 test_dataset = load_dataset(args.dataset_id)["train"]
-test_dataset = torch.utils.data.random_split(test_dataset, [args.max_samples, len(test_dataset)-args.max_samples])[0]
+test_dataset = torch.utils.data.random_split(test_dataset, [25, len(test_dataset)-25])[0]
 img_converter_to_audio = SpectrogramImageConverter(SpectrogramParams(sample_rate=44100, min_frequency=0, max_frequency=10000))
 
 def save_img_and_audio(img, filename):

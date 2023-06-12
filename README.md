@@ -26,9 +26,15 @@ To show how a training example is prepared, we start with a 5 second audio clip 
 
 ![dataset_original](github_page/datset_original.mp4)
 
+
+https://github.com/zachary-shah/riff-pix2pix/assets/123213526/6c06268f-8653-46e7-80b3-e887243db472
+
+
 This is considered the "Original" audio. Then, we add the vocal audio stem from the example to act as the "Edited" audio, which is the target for the model to learn to generate such stems:
 
 ![dataset_target](github_page/dataset_target.mp4)
+
+https://github.com/zachary-shah/riff-pix2pix/assets/123213526/83462328-9aa4-4750-a029-25a219c6b740
 
 Since SD diffuses in the image space, we instead prepare an original/edited image pair from these pieces of audio, where the original contains the background and the edited target image contains the background + vocals, with the edit prompt for this particular example as: "add a female vocal pop melody, electronic style, with playful long held vocal notes":
 
@@ -42,6 +48,8 @@ Overall, the approach works... sometimes. When it works, our model generates dec
 
 ![pop_original](github_page/pop_original.mp4)
 
+https://github.com/zachary-shah/riff-pix2pix/assets/123213526/6abb9539-2cd1-4a94-995d-0202ce0fd578
+
 Converting this to a spectrogram and feeding it into the model with the prompt to "add a female vocal pop-rock melody with an etherial voice", the spectrogram sample visibly preserves the background audio structure whilst adding a melody on top:
 
 ![melody_added_pop](github_page/melody_added_pop.gif)
@@ -50,9 +58,13 @@ Here is the converted audio of the sample:
 
 ![pop_sample](github_page/pop_sample.mp4)
 
+https://github.com/zachary-shah/riff-pix2pix/assets/123213526/97edba3b-e7eb-4477-b8fb-9be39bbc5b68
+
 And hear that the vocals generated are audibly different than the vocals of the original song we extracted the background audio from:
 
 ![pop_target](github_page/pop_target.mp4)
+
+https://github.com/zachary-shah/riff-pix2pix/assets/123213526/3d5608b9-aa39-40f3-9637-46a95dcbe530
 
 Here is a second example, instead for a heavy metal song, given the background audio and a prompt to "add a heavy metal scremo vocal part, borderline satanic vocals":
 
@@ -62,10 +74,14 @@ The vocals generated here are quite sparse, but the background audio is still pr
 
 ![metal_sample](github_page/metal_sample.mp4)
 
+https://github.com/zachary-shah/riff-pix2pix/assets/123213526/93a28da5-8c69-4050-b175-952222b2bdcc
+
+
 Compare this to the original input background:
 
 ![metal_original](github_page/metal_original.mp4)
 
+https://github.com/zachary-shah/riff-pix2pix/assets/123213526/3312881f-f334-41c8-b2cf-c7b8c6b6cbaa
 
 Though this approach works sometimes, about 80% of the time, given a new input spectrogram and an edit instruction, the edit is not performed and the input. It is likely that the perturbation in the text is not strong enough to find a spectral representation of the audio, likely because the dimensionality of the edit instruction is pretty small in our proof of concept. Here is an example of the model input and its sample for cases when this happens, where you can see the sample just looks like a slightly noisy version of the original background input with no vocals generated:
 
@@ -86,14 +102,17 @@ Training Target (or label):
 
 ![train_target](github_page/train_target.mp4)
 
+https://github.com/zachary-shah/riff-pix2pix/assets/123213526/d38053f3-cc9f-4217-a4e3-c91f53760fd9
+
 Inference Sample (hear the echo of lyrics present in the label): 
 
 ![train_sample](github_page/train_sample.mp4)
 
+https://github.com/zachary-shah/riff-pix2pix/assets/123213526/3068bead-6dfe-490e-b91f-9afd138cef76
+
 ## Conclusion
 
 Though there were some issues in our implementation, if trained at a larger scale with a larger variety of "edit" instructions to the music, it is likely these overfitting issues would not remain. However, when we test this model on unseen audio, as shown in the two examples above, there is a visible edit made that matches the edit instruction provided, with high-quality preservation of the input. This initial project shows promise to use an InstructPix2Pix training architecture to build a diffusion model for the audio-inpainting task.
-
 
 And that's our project! Of course, there are many more improvements to make, like generating more coherent lyrics (which is an open problem in the generative audio community) or extending the audio generation to longer than 5 seconds. However, our project demonstrates the potential for exploring deep spectral conditioning text-to-audio generation.
 

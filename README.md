@@ -10,6 +10,8 @@ The audio inpainting task is as follows: given an input clip of musical audio an
 
 In this project, we instead look at a simpler task: given input audio, "paint in" a *vocal melody* as described by a text prompt. This can be generalized to any type of instrument / musical stem with proper training.
 
+Previous work has demonstrated potential for this task using a ControlNet ([see riff-cnet repo here](https://github.com/zachary-shah/riff-cnet)) to generate musical melodies that fit in with the general structure of an input representation of background audio; however, ControlNets are limited to only partial preservation of background audio due to the sparse representation of the input control image. 
+
 To complete this task, we trained an InstructPix2Pix model to learn to "edit in" a vocal part of a spectrogram, which is essentially an image-transformation representation of a 5 second clip of audio. We trained this task off the [Riffusion V1](https://huggingface.co/riffusion/riffusion-model-v1/tree/main) checkpoint, developed by Seth Forsgren Hayk Martiros, which is a fine-tune of Stable Diffusion V1.5 which has learned to recognize and diffuse in the spectrogram image space.
 
 ## Training Setup:

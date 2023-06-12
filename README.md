@@ -18,7 +18,7 @@ To complete this task, we trained an InstructPix2Pix model to learn to "edit in"
 
 To train an InstructPix2Pix model, training data must be in the following form: (Original Image, Edit Instruction, Edited Image). For our task, this takes the form:
 
-- **Original image**:  the spectrogram of the "background audio" or the song without vocals
+- **Original image**:  the spectrogram of the "background audio", i.e. the song without vocals
 - **Edit instruction**:  a text prompt in a form like "add a {style-descriptors} {instrument-stem}"
 - **Edited image**:  the spectrogram of the "full audio", which includes the vocals in the training song
 

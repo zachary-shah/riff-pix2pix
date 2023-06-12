@@ -77,8 +77,8 @@ save_img_and_audio(item["edited_image"], "target_" + base_name)
 
 print(f"Beginning inference for sample prompt: \"{prompt}\"")
 
-image_guidance_scales = [1, 1.3, 1.6, 2]
-text_guidance_scales = [3, 7.5, 10, 15]
+image_guidance_scales = [1.5, 2, 3, 5]
+text_guidance_scales = [5, 10, 15]
 
 for image_guidance_scale in image_guidance_scales:
     for text_guidance_scale in text_guidance_scales:

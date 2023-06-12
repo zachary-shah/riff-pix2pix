@@ -1,3 +1,8 @@
+"""
+Script to upload preprocessed dataset to HuggingfaceHub for access during training.
+"""
+
+
 import argparse
 
 from datasets import Dataset, Features

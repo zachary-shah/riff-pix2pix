@@ -1,3 +1,8 @@
+"""
+Script to run inference on pretrained Riff-InstructPix2Pix model, using a test dataset located on huggingface.
+Saves the spectrograms and converted audio representations for each example.
+"""
+
 import PIL
 import requests
 import torch

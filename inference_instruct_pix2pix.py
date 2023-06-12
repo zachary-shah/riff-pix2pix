@@ -66,7 +66,7 @@ def parse_args():
 args = parse_args()
 
 # add seed 
-if args.seed: torch.manual_seed(1)
+if args.seed: torch.manual_seed(2)
 
 # set up model and test data
 pipe = StableDiffusionInstructPix2PixPipeline.from_pretrained(args.model_id, torch_dtype=torch.float16).to("cuda")

@@ -1,4 +1,4 @@
-# Controlled Audio Inpainting using Riffusion and ImagePix2Pix
+# Audio Inpainting using Riffusion and ImagePix2Pix
 
 ## Summary: 
 

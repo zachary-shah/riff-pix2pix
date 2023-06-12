@@ -60,6 +60,7 @@ def parse_args():
 
 args = parse_args()
 
+
 # set up model and test data
 pipe = StableDiffusionInstructPix2PixPipeline.from_pretrained(args.model_id, torch_dtype=torch.float16).to("cuda")
 generator = torch.Generator("cuda").manual_seed(0)
@@ -74,23 +75,39 @@ def save_img_and_audio(img, filename):
     out_audio_recon = img_converter_to_audio.audio_from_spectrogram_image(img, apply_filters=True).set_channels(2)
     out_audio_recon.export(os.path.join(args.base_save_path,filename + ".wav"), format="wav") 
 
-print(f"Beginning inference for {len(test_dataset)} samples.")
 
-for (i, item) in tqdm(enumerate(test_dataset)):
-    # get sample
-    edited_image_sample = pipe(
-        item["edited_prompt"],
-        image=item["original_image"],
-        num_inference_steps=args.num_inference_steps,
-        image_guidance_scale=args.image_guidance_scale,
-        guidance_scale=args.guidance_scale,
-        generator=generator,
-    ).images[0]
+# just get first idem
+item = test_dataset[0]
+prompt = item["edited_prompt"]
+original_img = item["original_image"]
+base_name = prompt.replace(" ", "_").replace(",", "").replace(".","")
 
-    # save images
-    base_name = item["edited_prompt"].replace(" ", "_").replace(",", "").replace(".","")
-    save_img_and_audio(edited_image_sample, base_name + "_edit_sample")
-    save_img_and_audio(item["original_image"], base_name + "_original")
-    save_img_and_audio(item["edited_image"], base_name + "_edit_target")
+# save orig and edit for reference
+save_img_and_audio(item["original_image"], "original")
+save_img_and_audio(item["edited_image"], "target_" + base_name)
+
+print(f"Beginning inference for sample prompt: \"{prompt}\"")
+
+image_guidance_scales = [1, 1.3, 1.6, 2]
+text_guidance_scales = [3, 7.5, 10, 15]
+
+for image_guidance_scale in image_guidance_scales:
+    for text_guidance_scale in text_guidance_scales:
+
+        # seed process each time
+        torch.manual_seed(364)
+
+        # get sample
+        edited_image_sample = pipe(
+            prompt,
+            original_img,
+            num_inference_steps=args.num_inference_steps,
+            image_guidance_scale=image_guidance_scale,
+            guidance_scale=text_guidance_scale,
+            generator=generator,
+        ).images[0]
+
+        # save sample
+        save_img_and_audio(edited_image_sample, f"sT={text_guidance_scale}_sI={image_guidance_scale}")
 
 print("Inference complete!")

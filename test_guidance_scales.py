@@ -1,3 +1,9 @@
+"""
+Observe behavior of sampling for one input with different image and text guidances 
+Result: best qualitative performance at sI = 1.5, sT = 10-15
+"""
+
+
 import PIL
 import requests
 import torch

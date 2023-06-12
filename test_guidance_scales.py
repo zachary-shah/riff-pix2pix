@@ -67,7 +67,7 @@ def save_img_and_audio(img, filename):
 
 # just get first idem
 item = test_dataset[args.sample_indx]
-prompt = item["edited_prompt"]
+prompt = "add a female vocal pop melody." #item["edited_prompt"]
 original_img = item["original_image"]
 base_name = prompt.replace(" ", "_").replace(",", "").replace(".","")
 
